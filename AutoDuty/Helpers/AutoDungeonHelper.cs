@@ -2,7 +2,7 @@ using Dalamud.Game;
 using Dalamud.Plugin.Services;
 using ECommons.DalamudServices;
 using AutoDuty.Managers; 
-using AutoDuty.Helpers; 
+using AutoDuty.Helpers;
 using ECommons.Automation.LegacyTaskManager;
 
 namespace AutoDuty.Helpers

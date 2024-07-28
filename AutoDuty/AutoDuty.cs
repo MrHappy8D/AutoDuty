@@ -277,16 +277,13 @@ public class AutoDuty : IDalamudPlugin
                     TaskManager.Enqueue(() => { Stage = 99; }, "Loop-SetStage=99");
                     TaskManager.Enqueue(() => { Started = false; }, "Loop-SetStarted=false");
                     TaskManager.Enqueue(() => ObjectHelper.IsReady, int.MaxValue, "Loop-WaitPlayerReady");
-                    // if (Configuration.AutoEquipRecommendedGear)
-                    // {
-                    //     TaskManager.Enqueue(() => 
-                    //     {
-                    //         Svc.Log.Info("Starting AutoEquip");
-                    //         AutoEquipHelper.Invoke(TaskManager);
-                    //         return true;
-                    //     }, "InvokeEquipmentManager");
-                    //     TaskManager.Enqueue(() => !AutoEquipHelper.AutoEquipRunning, int.MaxValue, "WaitAutoEquipComplete");
-                    // }
+                    if (Configuration.AutoEquipRecommendedGear)
+                    {
+                        TaskManager.Enqueue(() => AutoEquipHelper.Invoke(TaskManager), "Run-AutoEquip");
+                        TaskManager.DelayNext("Run-Delay50", 50);
+                        TaskManager.Enqueue(() => !AutoEquipHelper.AutoEquipRunning, int.MaxValue, "Run-WaitAutoEquipComplete");
+                        TaskManager.Enqueue(() => !ObjectHelper.IsOccupied, "Run-WaitANotIsOccupied");
+                    }
                     if (Configuration.AutoRepair && InventoryHelper.LowestEquippedCondition() <= Configuration.AutoRepairPct)
                     {
                         TaskManager.Enqueue(() => RepairHelper.Invoke(), "Loop-AutoRepair");
@@ -312,7 +309,7 @@ public class AutoDuty : IDalamudPlugin
                         TaskManager.DelayNext("Loop-Delay50", 50);
                         TaskManager.Enqueue(() => !DesynthHelper.DesynthRunning, int.MaxValue, "Loop-WaitAutoDesynthComplete");
                     }
-                    if (!Configuration.Squadron)
+                    if (!Configuration.Squadron && !Configuration.AutoDungeonSelect)
                     {
                         if (Configuration.RetireToBarracksBeforeLoops)
                             TaskManager.Enqueue(() => GotoBarracksHelper.Invoke(), "Loop-GotoBarracksInvoke");
@@ -325,7 +322,7 @@ public class AutoDuty : IDalamudPlugin
                         AutoDungeonHelper.RegisterDungeonBasedOnType(dungeonId, managerType, 
                                 _dutySupportManager, _squadronManager, _trustManager, TaskManager);
                     }
-                    if (!Configuration.AutoDungeonSelect) {
+                    else if (!Configuration.AutoDungeonSelect) {
                         if (Configuration.Trust) 
                         {
                             _trustManager.RegisterTrust(CurrentTerritoryContent);
@@ -346,7 +343,6 @@ public class AutoDuty : IDalamudPlugin
                             _squadronManager.RegisterSquadron(CurrentTerritoryContent);
                         }
                     }
-
                     else if (Configuration.Regular || Configuration.Trial || Configuration.Raid)
                         _regularDutyManager.RegisterRegularDuty(CurrentTerritoryContent);
                     TaskManager.Enqueue(() => CurrentLoop++, "Loop-IncrementCurrentLoop");
@@ -410,8 +406,7 @@ public class AutoDuty : IDalamudPlugin
 
         if (territoryType == 0 && Configuration.AutoDungeonSelect)
         {
-            var appropriateDungeonId = AutoSquadronDungeonHelper.GetAppropriateSquadronDungeonId(Svc.ClientState);
-            if (appropriateDungeonId.HasValue)
+            var appropriateDungeonId = dungeonId;
             {
                 Svc.Log.Info($"Appropriate dungeon ID found: {appropriateDungeonId.Value}");
                 if (ContentHelper.DictionaryContent.TryGetValue(appropriateDungeonId.Value, out var appropriateDungeon))
@@ -457,13 +452,10 @@ public class AutoDuty : IDalamudPlugin
             
             if (Configuration.AutoEquipRecommendedGear)
             {
-                TaskManager.Enqueue(() => 
-                {
-                    Svc.Log.Info("Starting AutoEquip");
-                    AutoEquipHelper.Invoke(TaskManager);
-                    return true;
-                }, "InvokeEquipmentManager");
-                TaskManager.Enqueue(() => !AutoEquipHelper.AutoEquipRunning, int.MaxValue, "WaitAutoEquipComplete");
+                TaskManager.Enqueue(() => AutoEquipHelper.Invoke(TaskManager), "Run-AutoEquip");
+                TaskManager.DelayNext("Run-Delay50", 50);
+                TaskManager.Enqueue(() => !AutoEquipHelper.AutoEquipRunning, int.MaxValue, "Run-WaitAutoEquipComplete");
+                TaskManager.Enqueue(() => !ObjectHelper.IsOccupied, "Run-WaitANotIsOccupied");
             }
             if (Configuration.AutoRepair && InventoryHelper.LowestEquippedCondition() <= Configuration.AutoRepairPct)
             {
@@ -472,7 +464,7 @@ public class AutoDuty : IDalamudPlugin
                 TaskManager.Enqueue(() => !RepairHelper.RepairRunning, int.MaxValue, "Run-WaitAutoRepairComplete");
                 TaskManager.Enqueue(() => !ObjectHelper.IsOccupied, "Run-WaitANotIsOccupied");
             }
-            if (!Configuration.Squadron)
+            if (!Configuration.Squadron && !Configuration.AutoDungeonSelect)
             {
                 if (Configuration.RetireToBarracksBeforeLoops)
                     TaskManager.Enqueue(() => GotoBarracksHelper.Invoke(), "Run-GotoBarracksInvoke");
@@ -486,8 +478,7 @@ public class AutoDuty : IDalamudPlugin
                 AutoDungeonHelper.RegisterDungeonBasedOnType(dungeonId, managerType, 
                         _dutySupportManager, _squadronManager, _trustManager, TaskManager);
             }
-
-            if (!Configuration.AutoDungeonSelect) {
+            else if (!Configuration.AutoDungeonSelect) {
                 if (Configuration.Trust) 
                 {
                     _trustManager.RegisterTrust(CurrentTerritoryContent);
@@ -507,15 +498,6 @@ public class AutoDuty : IDalamudPlugin
                     TaskManager.Enqueue(() => !GotoBarracksHelper.GotoBarracksRunning && !GotoInnHelper.GotoInnRunning, int.MaxValue, "Run-WaitGotoComplete");
                     _squadronManager.RegisterSquadron(CurrentTerritoryContent);
                 }
-            }
-
-                
-            {
-                TaskManager.Enqueue(() => GotoBarracksHelper.Invoke(), "Run-GotoBarracksInvoke");
-                TaskManager.DelayNext("Run-Delay50", 50);
-                TaskManager.Enqueue(() => !GotoBarracksHelper.GotoBarracksRunning && !GotoInnHelper.GotoInnRunning, int.MaxValue, "Run-WaitGotoComplete");
-                _squadronManager.RegisterSquadron(CurrentTerritoryContent);
-                
             }
             TaskManager.Enqueue(() => !ObjectHelper.IsValid, "Run");
             TaskManager.Enqueue(() => ObjectHelper.IsValid, int.MaxValue, "Run");

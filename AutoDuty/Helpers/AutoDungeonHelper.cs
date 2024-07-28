@@ -76,8 +76,8 @@ namespace AutoDuty.Helpers
         }
 
         internal static void RegisterDungeonBasedOnType(uint? dungeonId, DungeonManagerType managerType, 
-            DutySupportManager dutySupportManager, SquadronManager squadronManager, TrustManager trustManager,
-            TaskManager taskManager)
+    DutySupportManager dutySupportManager, SquadronManager squadronManager, TrustManager trustManager,
+    TaskManager taskManager)
         {
             if (!dungeonId.HasValue)
             {
@@ -85,27 +85,58 @@ namespace AutoDuty.Helpers
                 return;
             }
 
+            Svc.Log.Info($"Registering dungeon. ID: {dungeonId.Value}, Manager Type: {managerType}");
+
             if (ContentHelper.DictionaryContent.TryGetValue(dungeonId.Value, out var content))
             {
+                Svc.Log.Info($"Content found for TerritoryType: {dungeonId.Value}");
                 switch (managerType)
                 {
                     case DungeonManagerType.Support:
+                        Svc.Log.Info("Using DutySupport manager");
+                        AutoDuty.Plugin.Configuration.Support = true;
+                        AutoDuty.Plugin.Configuration.Squadron = false;
+                        AutoDuty.Plugin.Configuration.Trust = false;
+                        AutoDuty.Plugin.Configuration.Regular = false;
+                        AutoDuty.Plugin.Configuration.Trial = false;
+                        AutoDuty.Plugin.Configuration.Raid = false;
                         dutySupportManager.RegisterDutySupport(content);
                         break;
                     case DungeonManagerType.Squadron:
+                        Svc.Log.Info("Using Squadron manager");
+                        AutoDuty.Plugin.Configuration.Support = false;
+                        AutoDuty.Plugin.Configuration.Squadron = true;
+                        AutoDuty.Plugin.Configuration.Trust = false;
+                        AutoDuty.Plugin.Configuration.Regular = false;
+                        AutoDuty.Plugin.Configuration.Trial = false;
+                        AutoDuty.Plugin.Configuration.Raid = false;
                         taskManager.Enqueue(() => GotoBarracksHelper.Invoke(), "Run-GotoBarracksInvoke");
                         taskManager.DelayNext("Run-Delay50", 50);
                         taskManager.Enqueue(() => !GotoBarracksHelper.GotoBarracksRunning && !GotoInnHelper.GotoInnRunning, int.MaxValue, "Run-WaitGotoComplete");
                         squadronManager.RegisterSquadron(content);
                         break;
                     case DungeonManagerType.Trust:
+                        Svc.Log.Info("Using Trust manager");
+                        AutoDuty.Plugin.Configuration.Support = false;
+                        AutoDuty.Plugin.Configuration.Squadron = false;
+                        AutoDuty.Plugin.Configuration.Trust = true;
+                        AutoDuty.Plugin.Configuration.Regular = false;
+                        AutoDuty.Plugin.Configuration.Trial = false;
+                        AutoDuty.Plugin.Configuration.Raid = false;
                         trustManager.RegisterTrust(content);
                         break;
                     default:
-                        Svc.Log.Error("Unsupported dungeon manager type. Defaulting to DutySupport.");
+                        Svc.Log.Error($"Unsupported dungeon manager type: {managerType}. Defaulting to DutySupport.");
+                        AutoDuty.Plugin.Configuration.Support = true;
+                        AutoDuty.Plugin.Configuration.Squadron = false;
+                        AutoDuty.Plugin.Configuration.Trust = false;
+                        AutoDuty.Plugin.Configuration.Regular = false;
+                        AutoDuty.Plugin.Configuration.Trial = false;
+                        AutoDuty.Plugin.Configuration.Raid = false;
                         dutySupportManager.RegisterDutySupport(content);
                         break;
                 }
+                Svc.Log.Info($"Dungeon registration complete for ID: {dungeonId.Value}");
             }
             else
             {

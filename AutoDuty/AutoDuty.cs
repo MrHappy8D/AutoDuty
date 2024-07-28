@@ -26,6 +26,7 @@ using TinyIpc.Messaging;
 using ECommons.Automation;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using ImGuiNET;
+using System.Threading.Tasks;
 
 namespace AutoDuty;
 
@@ -241,6 +242,14 @@ public class AutoDuty : IDalamudPlugin
     private unsafe void ClientState_TerritoryChanged(ushort t)
     {
         Svc.Log.Debug($"ClientState_TerritoryChanged: t={t}");
+
+        // Check if LocalPlayer is null
+        if (Svc.ClientState.LocalPlayer == null)
+        {
+            Svc.Log.Warning("LocalPlayer is null. Retrying in 250ms...");
+            Task.Delay(250).ContinueWith(_ => ClientState_TerritoryChanged(t));
+            return;
+        }
        
         CurrentTerritoryType = t;
         MainListClicked = false;
@@ -258,11 +267,6 @@ public class AutoDuty : IDalamudPlugin
 
         Action = "";
 
-        
-
-        // Wait for the local player to be available and valid
-        TaskManager.Enqueue(() => Svc.ClientState.LocalPlayer != null && ObjectHelper.IsValid, int.MaxValue, "WaitForValidLocalPlayer");
-
         var (dungeonId, managerType) = AutoDungeonHelper.GetAppropriateDungeon(Svc.ClientState, Configuration.UseSquadronsIfPossible, Configuration.PreferTrust);
 
         TaskManager.Enqueue(() =>
@@ -277,6 +281,17 @@ public class AutoDuty : IDalamudPlugin
                     TaskManager.Enqueue(() => { Stage = 99; }, "Loop-SetStage=99");
                     TaskManager.Enqueue(() => { Started = false; }, "Loop-SetStarted=false");
                     TaskManager.Enqueue(() => ObjectHelper.IsReady, int.MaxValue, "Loop-WaitPlayerReady");
+                    
+                    // Double-check LocalPlayer is still available before proceeding
+                    TaskManager.Enqueue(() => 
+                    {
+                        if (Svc.ClientState.LocalPlayer == null)
+                        {
+                            Svc.Log.Error("LocalPlayer became null unexpectedly. Retrying...");
+                            return false;
+                        }
+                        return true;
+                    }, int.MaxValue, "ConfirmLocalPlayerAvailable");
                     if (Configuration.AutoEquipRecommendedGear)
                     {
                         TaskManager.Enqueue(() => AutoEquipHelper.Invoke(TaskManager), "Run-AutoEquip");
@@ -309,15 +324,17 @@ public class AutoDuty : IDalamudPlugin
                         TaskManager.DelayNext("Loop-Delay50", 50);
                         TaskManager.Enqueue(() => !DesynthHelper.DesynthRunning, int.MaxValue, "Loop-WaitAutoDesynthComplete");
                     }
-                    if (!Configuration.Squadron && !Configuration.AutoDungeonSelect)
+                    
+                    if (!Configuration.Squadron && managerType != DungeonManagerType.Squadron)
                     {
                         if (Configuration.RetireToBarracksBeforeLoops)
-                            TaskManager.Enqueue(() => GotoBarracksHelper.Invoke(), "Loop-GotoBarracksInvoke");
+                            TaskManager.Enqueue(() => GotoBarracksHelper.Invoke(), "Run-GotoBarracksInvoke");
                         else if (Configuration.RetireToInnBeforeLoops)
-                            TaskManager.Enqueue(() => GotoInnHelper.Invoke(), "Loop-GotoInnInvoke");
-                        TaskManager.DelayNext("Loop-Delay50", 50);
-                        TaskManager.Enqueue(() => !GotoBarracksHelper.GotoBarracksRunning && !GotoInnHelper.GotoInnRunning, int.MaxValue, "Loop-WaitGotoComplete");
+                            TaskManager.Enqueue(() => GotoInnHelper.Invoke(), "Run-GotoInnInvoke");
+                        TaskManager.DelayNext("Run-Delay50", 50);
+                        TaskManager.Enqueue(() => !GotoBarracksHelper.GotoBarracksRunning && !GotoInnHelper.GotoInnRunning, int.MaxValue, "Run-WaitGotoComplete");
                     }
+                    
                     if (Configuration.AutoDungeonSelect) {
                         AutoDungeonHelper.RegisterDungeonBasedOnType(dungeonId, managerType, 
                                 _dutySupportManager, _squadronManager, _trustManager, TaskManager);
@@ -344,8 +361,17 @@ public class AutoDuty : IDalamudPlugin
                         }
                     }
                     else if (Configuration.Regular || Configuration.Trial || Configuration.Raid)
+                    {
                         _regularDutyManager.RegisterRegularDuty(CurrentTerritoryContent);
+                    }
+                        
                     TaskManager.Enqueue(() => CurrentLoop++, "Loop-IncrementCurrentLoop");
+                    TaskManager.Enqueue(() => Svc.Log.Debug($"Configuration.Regular: {Configuration.Regular}"));
+                    TaskManager.Enqueue(() => Svc.Log.Debug($"Configuration.Trial: {Configuration.Trial}"));
+                    TaskManager.Enqueue(() => Svc.Log.Debug($"Configuration.Raid: {Configuration.Raid}"));
+                    TaskManager.Enqueue(() => Svc.Log.Debug($"Configuration.Trust: {Configuration.Trust}"));
+                    TaskManager.Enqueue(() => Svc.Log.Debug($"Configuration.Squadron: {Configuration.Squadron}"));
+                    TaskManager.Enqueue(() => Svc.Log.Debug($"Configuration.Support: {Configuration.Support}"));
                     TaskManager.Enqueue(() => Svc.ClientState.TerritoryType == CurrentTerritoryContent.TerritoryType, int.MaxValue, "Loop-WaitCorrectTerritory");
                     TaskManager.Enqueue(() => ObjectHelper.IsValid, int.MaxValue, "Loop-WaitPlayerValid");
                     TaskManager.Enqueue(() => Svc.DutyState.IsDutyStarted, int.MaxValue, "Loop-WaitDutyStarted");
@@ -449,7 +475,15 @@ public class AutoDuty : IDalamudPlugin
         Svc.Log.Info($"Running {CurrentTerritoryContent.DisplayName} {Configuration.LoopTimes} Times");
         if (!InDungeon)
         {
-            
+            TaskManager.Enqueue(() => 
+            {
+                if (Svc.ClientState.LocalPlayer == null)
+                {
+                    Svc.Log.Error("LocalPlayer became null unexpectedly. Retrying...");
+                    return false;
+                }
+                return true;
+            }, int.MaxValue, "ConfirmLocalPlayerAvailable");
             if (Configuration.AutoEquipRecommendedGear)
             {
                 TaskManager.Enqueue(() => AutoEquipHelper.Invoke(TaskManager), "Run-AutoEquip");
@@ -464,7 +498,7 @@ public class AutoDuty : IDalamudPlugin
                 TaskManager.Enqueue(() => !RepairHelper.RepairRunning, int.MaxValue, "Run-WaitAutoRepairComplete");
                 TaskManager.Enqueue(() => !ObjectHelper.IsOccupied, "Run-WaitANotIsOccupied");
             }
-            if (!Configuration.Squadron && !Configuration.AutoDungeonSelect)
+             if (!Configuration.Squadron && managerType != DungeonManagerType.Squadron)
             {
                 if (Configuration.RetireToBarracksBeforeLoops)
                     TaskManager.Enqueue(() => GotoBarracksHelper.Invoke(), "Run-GotoBarracksInvoke");

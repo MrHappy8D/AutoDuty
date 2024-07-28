@@ -194,7 +194,7 @@ namespace AutoDuty.Windows
                                 MainWindow.ShowPopup("Error", "You must be in a group of 4 to run Regular Duties");
                             else if (Plugin.Configuration.Regular && !Plugin.Configuration.Unsynced && !ObjectHelper.PartyValidation())
                                 MainWindow.ShowPopup("Error", "You must have the correcty party makeup to run Regular Duties");
-                            else if (Plugin.Configuration.AutoDungeonSelect && Plugin.Configuration.Squadron)
+                            else if (Plugin.Configuration.AutoDungeonSelect)
                             {
                                 Plugin.Run();
                             }

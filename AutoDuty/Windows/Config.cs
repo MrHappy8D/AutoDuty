@@ -26,6 +26,10 @@ public class Configuration : IPluginConfiguration
     public int AutoGCTurninSlotsLeft { get; set; } = 5;
     public int LoopTimes { get; set; } = 1;
     public int TreasureCofferScanDistance { get; set; } = 25;
+    public bool AutoEquipRecommendedGear { get; set; } = false;
+    public bool AutoDungeonSelect { get; set; } = false;
+    public bool UseSquadronsIfPossible { get; set; } = false;
+    public bool PreferTrust { get; set; } = false;
     public bool AutoManageBossModAISettings { get; set; } = true;
     public bool AutoManageRSRState { get; set; } = true;
     public bool AutoExitDuty { get; set; } = true;
@@ -77,6 +81,7 @@ public class Configuration : IPluginConfiguration
     public int StopItemQtyInt { get; set; } = 1;
 
     public Dictionary<uint, Dictionary<Job, int>> PathSelections { get; set; } = [];
+    
 
     [NonSerialized]
     private IDalamudPluginInterface? PluginInterface;
@@ -104,6 +109,7 @@ public static class ConfigTab
     {
         if (MainWindow.CurrentTabName != "Config")
             MainWindow.CurrentTabName = "Config";
+        var autoEquipRecommendedGear = Configuration.AutoEquipRecommendedGear;
         var autoManageRSRState = Configuration.AutoManageRSRState;
         var autoManageBossModAISettings = Configuration.AutoManageBossModAISettings;
         var autoExitDuty = Configuration.AutoExitDuty;
@@ -245,6 +251,11 @@ public static class ConfigTab
                 autoRepairSelf = false;
                 Configuration.Save();
             }
+        }
+        if (ImGui.Checkbox("Auto Equip Recommended Gear", ref autoEquipRecommendedGear))
+        {
+            Configuration.AutoEquipRecommendedGear = autoEquipRecommendedGear;
+            Configuration.Save();
         }
         ImGui.Separator();
         if (ImGui.Checkbox("Auto Extract", ref autoExtract))
@@ -396,6 +407,7 @@ public static class ConfigTab
                 Configuration.Save();
             }
         }
+
     }
 
     public static class BossModConfigTab

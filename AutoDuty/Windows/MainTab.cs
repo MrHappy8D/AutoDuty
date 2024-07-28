@@ -35,6 +35,11 @@ namespace AutoDuty.Windows
             var _variant = Plugin.Configuration.Variant;
             var _unsynced = Plugin.Configuration.Unsynced;
             var _hideUnavailableDuties = Plugin.Configuration.HideUnavailableDuties;
+            var _autoDungeonSelect = Plugin.Configuration.AutoDungeonSelect;
+            var _useSquadronsIfPossible = Plugin.Configuration.UseSquadronsIfPossible;
+            var _preferTrust = Plugin.Configuration.PreferTrust;
+
+
 
             void DrawPathSelection()
             {
@@ -175,7 +180,7 @@ namespace AutoDuty.Windows
             {
                 
 
-                using (var d2 = ImRaii.Disabled(Plugin.CurrentTerritoryContent == null))
+                using (var d2 = ImRaii.Disabled(Plugin.CurrentTerritoryContent == null && !Plugin.Configuration.AutoDungeonSelect))
                 {
                     if (!Plugin.Running)
                     {
@@ -189,10 +194,18 @@ namespace AutoDuty.Windows
                                 MainWindow.ShowPopup("Error", "You must be in a group of 4 to run Regular Duties");
                             else if (Plugin.Configuration.Regular && !Plugin.Configuration.Unsynced && !ObjectHelper.PartyValidation())
                                 MainWindow.ShowPopup("Error", "You must have the correcty party makeup to run Regular Duties");
-                            else if (FileHelper.DictionaryPathFiles.ContainsKey(Plugin.CurrentTerritoryContent?.TerritoryType ?? 0))
+                            else if (Plugin.Configuration.AutoDungeonSelect && Plugin.Configuration.Squadron)
+                            {
                                 Plugin.Run();
+                            }
+                            else if (FileHelper.DictionaryPathFiles.ContainsKey(Plugin.CurrentTerritoryContent?.TerritoryType ?? 0))
+                            {
+                                Plugin.Run();
+                            }
                             else
+                            {
                                 MainWindow.ShowPopup("Error", "No path was found");
+                            }
                         }
                     }
                     else
@@ -200,7 +213,7 @@ namespace AutoDuty.Windows
                 }
                 using (var d1 = ImRaii.Disabled(Plugin.Running))
                 {
-                    using (var d2 = ImRaii.Disabled(Plugin.CurrentTerritoryContent == null))
+                    using (var d2 = ImRaii.Disabled(Plugin.CurrentTerritoryContent == null && !Plugin.Configuration.AutoDungeonSelect))
                     {
                         ImGui.SameLine(0, 15);
                         ImGui.PushItemWidth(140 * ImGuiHelpers.GlobalScale);
@@ -356,7 +369,40 @@ namespace AutoDuty.Windows
                             Plugin.Configuration.Save();
                         }
                     }
+<<<<<<< Updated upstream
                     if (!ImGui.BeginListBox("##DutyList", new Vector2(500 * ImGuiHelpers.GlobalScale, 525 * ImGuiHelpers.GlobalScale))) return;
+=======
+                    // if (Plugin.Configuration.Squadron)
+                    // {
+                    //     if (ImGui.Checkbox("Auto Squadron Dungeon Select", ref _squadronDungeonSelect))
+                    //     {
+                    //         Plugin.Configuration.AutoSquadronDungeonSelect = _squadronDungeonSelect;
+                    //         Plugin.Configuration.Save();
+                    //     }
+                    // }
+                    if (ImGui.Checkbox("Auto Dungeon Select", ref _autoDungeonSelect))
+                    {
+                        Plugin.Configuration.AutoDungeonSelect = _autoDungeonSelect;
+                        Plugin.Configuration.Save();
+                    }
+
+                    if (_autoDungeonSelect)
+                    {
+                        ImGui.Indent();
+                        if (ImGui.Checkbox("Use Squadrons if possible", ref _useSquadronsIfPossible))
+                        {
+                            Plugin.Configuration.UseSquadronsIfPossible = _useSquadronsIfPossible;
+                            Plugin.Configuration.Save();
+                        }
+                        if (ImGui.Checkbox("Prefer Trust", ref _preferTrust))
+                        {
+                            Plugin.Configuration.PreferTrust = _preferTrust;
+                            Plugin.Configuration.Save();
+                        }
+                        ImGui.Unindent();
+                    }
+                    if (!ImGui.BeginListBox("##DutyList", new Vector2(450 * ImGuiHelpers.GlobalScale, 525 * ImGuiHelpers.GlobalScale))) return;
+>>>>>>> Stashed changes
 
                     if (VNavmesh_IPCSubscriber.IsEnabled && BossMod_IPCSubscriber.IsEnabled)
                     {

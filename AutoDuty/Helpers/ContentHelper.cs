@@ -2,6 +2,8 @@
 using ECommons.DalamudServices;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.IO;
 
 namespace AutoDuty.Helpers
 {
@@ -109,6 +111,27 @@ namespace AutoDuty.Helpers
             }
 
             DictionaryContent = DictionaryContent.OrderBy(content => content.Value.ExVersion).ThenBy(content => content.Value.ClassJobLevelRequired).ThenBy(content => content.Value.TerritoryType).ToDictionary();
+        }
+
+        internal static void DebugOutputDictionaryContent()
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("DictionaryContent Contents:");
+            sb.AppendLine("TerritoryType | Name | DisplayName | GCArmyContent | GCArmyIndex");
+            sb.AppendLine("------------------------------------------------------------");
+
+            foreach (var content in DictionaryContent.Values.OrderBy(c => c.TerritoryType))
+            {
+                sb.AppendLine($"{content.TerritoryType} | {content.Name} | {content.DisplayName} | {content.GCArmyContent} | {content.GCArmyIndex}");
+            }
+
+            // Output to log
+            Svc.Log.Information(sb.ToString());
+
+            // Optionally, write to a file
+            string filePath = Path.Combine(Svc.PluginInterface.GetPluginConfigDirectory(), "ContentDebug.txt");
+            File.WriteAllText(filePath, sb.ToString());
+            Svc.Log.Information($"Content debug information written to: {filePath}");
         }
     }
 }

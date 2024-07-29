@@ -49,46 +49,6 @@ namespace AutoDuty.Helpers
         internal static unsafe void AutoEquipRecommendedGear(IFramework framework)
         {
 
-            // if (AutoDuty.Plugin.Started || AutoDuty.Plugin.InDungeon)
-            //     Stop();
-
-            // if (!EzThrottler.Throttle("AutoEquip", 250))
-            //     return;
-            // AutoDuty.Plugin.Action = "Auto Equipping";
-
-            // if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat] || 
-            //         Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas])
-            //     {
-            //         Svc.Log.Debug("Cannot equip gear: player is in combat or between areas.");
-            //         AutoEquipRunning = false;
-            //         Stop();
-            //         return;
-            //     }
-                
-               
-            // var mod = RecommendEquipModule.Instance();
-
-            // if (mod != null) {
-            //     mod->SetupForClassJob((byte)Svc.ClientState.LocalPlayer!.ClassJob.Id);
-            //     Svc.Log.Debug("Set up recommended gear for current class/job.");
-
-            // mod->EquipRecommendedGear();
-            //     Svc.Log.Info("Attempted to equip recommended gear.");
-
-            // var id = RaptureGearsetModule.Instance()->CurrentGearsetIndex;
-            //     RaptureGearsetModule.Instance()->UpdateGearset(id);
-            //     Svc.Log.Info($"Attempted to update gearset {id}.");
-            //     AutoEquipRunning = false;
-            //     Stop();
-            //     return ;
-            // }
-
-            // Stop();
-            // return ;
-
-        
-            
-
             _taskManager.Insert(() =>
             {
                 if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat] || 
@@ -102,33 +62,37 @@ namespace AutoDuty.Helpers
                 return true;
             }, "CheckConditions");
 
+            
+
             var mod = RecommendEquipModule.Instance();
 
-            _taskManager.Insert(() => 
+            _taskManager.EnqueueImmediate(() => 
             {
-                mod->SetupForClassJob((byte)Svc.ClientState.LocalPlayer!.ClassJob.Id);
                 Svc.Log.Debug("Set up recommended gear for current class/job.");
-            }, "SetupRecommendedGear");
+                mod->SetupForClassJob((byte)Svc.ClientState.LocalPlayer!.ClassJob.Id);
+                mod->EquipRecommendedGear();
+            });
 
-            _taskManager.DelayNext("EquipGear", 500);
+            _taskManager.EnqueueImmediate(() => 
+            {
+                Svc.Log.Info("Attempted to equip recommended gear.");
+                mod->EquipRecommendedGear();
+            });
 
-            _taskManager.Insert(() => 
+            
+            _taskManager.EnqueueImmediate(() => 
             {
                 mod->EquipRecommendedGear();
-                Svc.Log.Info("Attempted to equip recommended gear.");
-                return true;
-            }, "EquipRecommendedGear");
-
-            _taskManager.DelayNext("UpdateGearset", 1000);
-            _taskManager.Insert(() => 
-            {
                 var id = RaptureGearsetModule.Instance()->CurrentGearsetIndex;
                 RaptureGearsetModule.Instance()->UpdateGearset(id);
                 Svc.Log.Info($"Attempted to update gearset {id}.");
                 AutoEquipRunning = false;
                 Stop();
-                return true;
+                
             }, "UpdateGearset");
+
+            // Force prevention of additional calls per queue
+            Svc.Framework.Update -= AutoEquipRecommendedGear;
         }
     }
 }

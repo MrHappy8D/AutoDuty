@@ -243,13 +243,17 @@ public class AutoDuty : IDalamudPlugin
     {
         Svc.Log.Debug($"ClientState_TerritoryChanged: t={t}");
 
+        CurrentTerritoryType = t;
+
         // Check if LocalPlayer is null
         if (Svc.ClientState.LocalPlayer == null)
         {
             Svc.Log.Warning("LocalPlayer is null. Retrying in 250ms...");
-            Task.Delay(250).ContinueWith(_ => ClientState_TerritoryChanged(t));
+            Task.Delay(250).ContinueWith(_ => ClientState_TerritoryChanged((ushort)CurrentTerritoryType));
             return;
         }
+
+        
        
         CurrentTerritoryType = t;
         MainListClicked = false;

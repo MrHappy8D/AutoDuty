@@ -46,11 +46,11 @@ namespace AutoDuty.Helpers
                 >= 81 and < 87 => (952u, DetermineManagerType(false, preferTrust, false)), // Tower of Zot
                 >= 87 and < 89 => (974u, DetermineManagerType(false, preferTrust, false)), // Ktisis Hyperboreia
                 >= 89 and < 91 => (978u, DetermineManagerType(false, preferTrust, false)), // The Aitiascope
-                >= 91 and < 93 => (1167u, DetermineManagerType(false, preferTrust, false)), // Ihuykatumu
-                >= 93 and < 95 => (1193u, DetermineManagerType(false, preferTrust, false)), // Worqor Zormor
-                >= 95 and < 97 => (11944u, DetermineManagerType(false, preferTrust, false)), // The Skydeep Cenote
-                >= 97 and < 99 => (1198u, DetermineManagerType(false, preferTrust, false)), // Vanguard
-                >= 99 and < 100 => (1208u, DetermineManagerType(false, preferTrust, false)), // Origenics
+                >= 91 and < 100 => (1167u, DetermineManagerType(false, preferTrust, false)), // Ihuykatumu
+                // >= 93 and < 95 => (1193u, DetermineManagerType(false, preferTrust, false)), // Worqor Zormor
+                // >= 95 and < 97 => (11944u, DetermineManagerType(false, preferTrust, false)), // The Skydeep Cenote
+                // >= 97 and < 99 => (1198u, DetermineManagerType(false, preferTrust, false)), // Vanguard
+                // >= 99 and < 100 => (1208u, DetermineManagerType(false, preferTrust, false)), // Origenics
                 _ => ((uint?)null, DungeonManagerType.Support)
             };
 

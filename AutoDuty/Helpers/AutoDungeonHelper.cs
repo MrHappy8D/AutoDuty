@@ -34,7 +34,7 @@ namespace AutoDuty.Helpers
             // Switch case based on level
             var (dungeonId, managerType) = currentLevel switch
             {
-                >= 16 and < 24 => (1036u, DungeonManagerType.Support), // TamTara Deepcroft
+                >= 16 and < 24 => (1037u, DungeonManagerType.Support), // TamTara Deepcroft
                 >= 24 and < 32 => (1039u, DetermineManagerType(useSquadronsIfPossible, false, true)), // The Thousand Maws of Toto-Rak
                 >= 32 and < 41 => (1041u, DetermineManagerType(useSquadronsIfPossible, false, true)), // Brayflox's Longstop
                 >= 41 and < 53 => (1042u, DetermineManagerType(useSquadronsIfPossible, false, true)), // Stone Vigil
@@ -43,9 +43,9 @@ namespace AutoDuty.Helpers
                 >= 67 and < 71 => (1144u, DetermineManagerType(false, false, false)), // Doma Castle
                 >= 71 and < 75 => (837u, DetermineManagerType(false, preferTrust, false)), // Holminster
                 >= 75 and < 81 => (823u, DetermineManagerType(false, preferTrust, false)), // Qitana
-                >= 81 and < 87 => (952u, DetermineManagerType(false, preferTrust, false)), // Tower of Zot
-                >= 87 and < 89 => (974u, DetermineManagerType(false, preferTrust, false)), // Ktisis Hyperboreia
-                >= 89 and < 91 => (978u, DetermineManagerType(false, preferTrust, false)), // The Aitiascope
+                >= 81 and < 91 => (952u, DetermineManagerType(false, preferTrust, false)), // Tower of Zot
+                // >= 87 and < 89 => (974u, DetermineManagerType(false, preferTrust, false)), // Ktisis Hyperboreia
+                // >= 89 and < 91 => (978u, DetermineManagerType(false, preferTrust, false)), // The Aitiascope
                 >= 91 and < 100 => (1167u, DetermineManagerType(false, preferTrust, false)), // Ihuykatumu
                 // >= 93 and < 95 => (1193u, DetermineManagerType(false, preferTrust, false)), // Worqor Zormor
                 // >= 95 and < 97 => (11944u, DetermineManagerType(false, preferTrust, false)), // The Skydeep Cenote

@@ -448,13 +448,7 @@ public class AutoDuty : IDalamudPlugin
             }
             Svc.Log.Info($"Auto Squadron Dungeon Select chose dungeon with ID: {territoryType}");
         }
-        else
-        {
-            Svc.Log.Error("Auto Squadron Dungeon Select failed to find an appropriate dungeon.");
-            return;
-        }
-
-        if (territoryType > 0)
+        else if (territoryType > 0)
         {
                 
             if (ContentHelper.DictionaryContent.TryGetValue(territoryType, out var content))
